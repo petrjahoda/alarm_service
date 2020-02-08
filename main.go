@@ -2,44 +2,53 @@ package main
 
 import (
 	"github.com/jinzhu/gorm"
-	"os"
-	"path/filepath"
+	"github.com/kardianos/service"
+	"github.com/petrjahoda/zapsi_database"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 )
 
 const version = "2019.4.3.21"
+const programName = "Alarm Service"
+const programDesription = "Creates alarms for workplaces"
 const deleteLogsAfter = 240 * time.Hour
-const downloadInSeconds = 10
+const downloadInSeconds = 60
+
+var serviceRunning = false
 
 var (
-	activeDevices  []Device
-	runningDevices []Device
-	deviceSync     sync.Mutex
+	activeAlarms  []zapsi_database.Alarm
+	runningAlarms []zapsi_database.Alarm
+	alarmSync     sync.Mutex
 )
 
-func main() {
+type program struct{}
+
+func (p *program) Start(s service.Service) error {
+	LogInfo("MAIN", "Starting "+programName+" on "+s.Platform())
+	go p.run()
+	serviceRunning = true
+	return nil
+}
+
+func (p *program) run() {
+	time.Sleep(10 * time.Second)
 	LogDirectoryFileCheck("MAIN")
 	LogInfo("MAIN", "Program version "+version+" started")
 	CreateConfigIfNotExists()
 	LoadSettingsFromConfigFile()
 	LogDebug("MAIN", "Using ["+DatabaseType+"] on "+DatabaseIpAddress+":"+DatabasePort+" with database "+DatabaseName)
-	SendMail("Program started", "Zapsi Service version "+version+" started")
+	CompleteDatabaseCheck()
 	for {
 		start := time.Now()
 		LogInfo("MAIN", "Program running")
-		CheckDatabase()
-		CheckTables()
-		UpdateActiveDevices("MAIN")
 		DeleteOldLogFiles()
-		LogInfo("MAIN", "Active devices: "+strconv.Itoa(len(activeDevices))+", running devices: "+strconv.Itoa(len(runningDevices)))
-		for _, activeDevice := range activeDevices {
-			activeDeviceIsRunning := CheckDevice(activeDevice)
-			if !activeDeviceIsRunning {
-				go RunDevice(activeDevice)
-			}
+		UpdateActiveAlarms("MAIN")
+		LogInfo("MAIN", "Active alarms: "+strconv.Itoa(len(activeAlarms)))
+		for _, activeAlarm := range activeAlarms {
+			go RunAlarm(activeAlarm)
+
 		}
 		if time.Since(start) < (downloadInSeconds * time.Second) {
 			sleeptime := downloadInSeconds*time.Second - time.Since(start)
@@ -48,9 +57,66 @@ func main() {
 		}
 	}
 }
+func (p *program) Stop(s service.Service) error {
+	serviceRunning = false
+	for len(runningAlarms) != 0 {
+		LogInfo("MAIN", "Stopping, still running devices: "+strconv.Itoa(len(runningAlarms)))
+		time.Sleep(1 * time.Second)
+	}
+	LogInfo("MAIN", "Stopped on platform "+s.Platform())
+	return nil
+}
 
-func CheckDevice(device Device) bool {
-	for _, runningDevice := range runningDevices {
+func main() {
+	serviceConfig := &service.Config{
+		Name:        programName,
+		DisplayName: programName,
+		Description: programDesription,
+	}
+	prg := &program{}
+	s, err := service.New(prg, serviceConfig)
+	if err != nil {
+		LogError("MAIN", err.Error())
+	}
+	err = s.Run()
+	if err != nil {
+		LogError("MAIN", "Problem starting "+serviceConfig.Name)
+	}
+}
+
+func CompleteDatabaseCheck() {
+	firstRunCheckComplete := false
+	for firstRunCheckComplete == false {
+		databaseOk := zapsi_database.CheckDatabase(DatabaseType, DatabaseIpAddress, DatabasePort, DatabaseLogin, DatabaseName, DatabasePassword)
+		tablesOk, err := zapsi_database.CheckTables(DatabaseType, DatabaseIpAddress, DatabasePort, DatabaseLogin, DatabaseName, DatabasePassword)
+		if err != nil {
+			LogInfo("MAIN", "Problem creating tables: "+err.Error())
+		}
+		if databaseOk && tablesOk {
+			WriteProgramVersionIntoSettings()
+			firstRunCheckComplete = true
+		}
+	}
+}
+
+func WriteProgramVersionIntoSettings() {
+	connectionString, dialect := zapsi_database.CheckDatabaseType(DatabaseType, DatabaseIpAddress, DatabasePort, DatabaseLogin, DatabaseName, DatabasePassword)
+	db, err := gorm.Open(dialect, connectionString)
+	if err != nil {
+		LogError("MAIN", "Problem opening "+DatabaseName+" database: "+err.Error())
+		return
+	}
+	defer db.Close()
+	var settings zapsi_database.Setting
+	db.Where("name=?", programName).Find(&settings)
+	settings.Name = programName
+	settings.Value = version
+	db.Save(&settings)
+	LogDebug("MAIN", "Updated version in database for "+programName)
+}
+
+func CheckAlarm(device Device) bool {
+	for _, runningDevice := range runningAlarms {
 		if runningDevice.Name == device.Name {
 			return true
 		}
@@ -58,97 +124,37 @@ func CheckDevice(device Device) bool {
 	return false
 }
 
-func RunDevice(device Device) {
-	LogInfo(device.Name, "Device started running")
-	deviceSync.Lock()
-	runningDevices = append(runningDevices, device)
-	deviceSync.Unlock()
-	deviceIsActive := true
-	device.CreateDirectoryIfNotExists()
-	device.SendTime()
-	timeUpdatedInLoop := false
-	for deviceIsActive {
-		start := time.Now()
-		ProcessDownloadedFiles(device)
-		success, err := device.DownloadData()
-		if err != nil {
-			LogError(device.Name, "Error downloading data: "+err.Error())
-		}
-		if success {
-			ProcessDownloadedFiles(device)
-		}
-		LogInfo(device.Name, "Processing takes "+time.Since(start).String())
-		timeUpdatedInLoop = device.SendTimeToZapsi(timeUpdatedInLoop)
-		device.Sleep(start)
-		deviceIsActive = CheckActive(device)
-	}
-	RemoveDeviceFromRunningDevices(device)
-	LogInfo(device.Name, "Device not active, stopped running")
+func RunAlarm(alarm zapsi_database.Alarm) {
+	LogInfo(alarm.Name, "Alarm started running")
+	alarmSync.Lock()
+	runningAlarms = append(runningAlarms, alarm)
+	alarmSync.Unlock()
+	start := time.Now()
+	ProcessAlarm(alarm)
+	LogInfo(alarm.Name, "Processing takes "+time.Since(start).String())
+	RemoveAlarmFromRunningDevices(alarm)
+	LogInfo(alarm.Name, "Alarm done, stopped running")
 
 }
 
-func ProcessDownloadedFiles(device Device) {
-	intermediateData := device.PrepareData()
-	if len(intermediateData) > 0 {
-		err := device.ProcessData(intermediateData)
-		if err != nil {
-			LogError(device.Name, "Error processing data: "+err.Error())
-		}
-	}
-	DeleteDownloadedFile("digital.txt", device)
-	DeleteDownloadedFile("analog.txt", device)
-	DeleteDownloadedFile("serial.txt", device)
-	DeleteDownloadedFile("ui_value.txt", device)
-}
-
-func DeleteDownloadedFile(deviceFileName string, device Device) {
-	deviceDirectory := filepath.Join(".", strconv.Itoa(int(device.ID))+"-"+device.Name)
-	deviceFullPath := strings.Join([]string{deviceDirectory, deviceFileName}, "/")
-	info, err := os.Stat(deviceFullPath)
-	if err != nil {
-		LogDebug(device.Name, "File does not exist: "+err.Error())
-		return
-	}
-	if !info.IsDir() {
-		err := os.Remove(deviceFullPath)
-		if err != nil {
-			LogError(device.Name, "Problem deleting file, "+err.Error())
+func RemoveAlarmFromRunningDevices(alarm zapsi_database.Alarm) {
+	for idx, runningAlarm := range runningAlarms {
+		if alarm.Name == runningAlarm.Name {
+			alarmSync.Lock()
+			runningAlarms = append(runningAlarms[0:idx], runningAlarms[idx+1:]...)
+			alarmSync.Unlock()
 		}
 	}
 }
 
-func CheckActive(device Device) bool {
-	for _, activeDevice := range activeDevices {
-		if activeDevice.Name == device.Name {
-			LogInfo(device.Name, "Device still active")
-			return true
-		}
-	}
-	LogInfo(device.Name, "Device not active")
-	return false
-}
-
-func RemoveDeviceFromRunningDevices(device Device) {
-	for idx, runningDevice := range runningDevices {
-		if device.Name == runningDevice.Name {
-			deviceSync.Lock()
-			runningDevices = append(runningDevices[0:idx], runningDevices[idx+1:]...)
-			deviceSync.Unlock()
-		}
-	}
-}
-
-func UpdateActiveDevices(reference string) {
-	connectionString, dialect := CheckDatabaseType()
+func UpdateActiveAlarms(reference string) {
+	connectionString, dialect := zapsi_database.CheckDatabaseType(DatabaseType, DatabaseIpAddress, DatabasePort, DatabaseLogin, DatabaseName, DatabasePassword)
 	db, err := gorm.Open(dialect, connectionString)
 	if err != nil {
 		LogError(reference, "Problem opening "+DatabaseName+" database: "+err.Error())
-		activeDevices = nil
+		activeAlarms = nil
 		return
 	}
 	defer db.Close()
-	var deviceType DeviceType
-	db.Where("name=?", "Zapsi").Find(&deviceType)
-	db.Where("device_type_id=?", deviceType.ID).Where("is_activated = true").Find(&activeDevices)
-	LogDebug("MAIN", "Zapsi device type id is "+strconv.Itoa(int(deviceType.ID)))
+	db.Find(&activeAlarms)
 }
