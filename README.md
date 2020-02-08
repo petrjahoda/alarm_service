@@ -12,7 +12,7 @@ Go service that send alarm emails, when sql returns a row
 * in alarms table user "," or ";" as a delimiter for email recipients
 
 
-##Examples
+## Examples
 * Sends and email at the beginning of 15 hour on Saturday
 ```sql
 select where (to_char(now(), 'Day')) like '%Saturday%' and extract(hour from now()) = 15;
