@@ -13,9 +13,10 @@ require (
 	github.com/jinzhu/now v1.1.1 // indirect
 	github.com/kardianos/service v1.0.0
 	github.com/lib/pq v1.3.0 // indirect
+	github.com/logrusorgru/aurora v0.0.0-20200102142835-e9ef32dff381
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/mattn/go-sqlite3 v2.0.3+incompatible // indirect
-	github.com/petrjahoda/zapsi_database v0.0.0-20200208123037-b3d918fd87cd
+	github.com/petrjahoda/zapsi_database v0.0.0-20200208131941-4068c4c2e77a
 	golang.org/x/crypto v0.0.0-20200208060501-ecb85df21340 // indirect
 	golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5 // indirect
 	google.golang.org/appengine v1.6.5 // indirect

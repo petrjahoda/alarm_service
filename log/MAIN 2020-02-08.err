@@ -1,0 +1,5 @@
+2020-02-08 14:39:50.867   MAIN   ERR   Problem parsing port for email, using default port 587 strconv.Atoi: parsing "": invalid syntax
+2020-02-08 15:10:33.988   MAIN   ERR   Problem opening zapsi4 database: dial tcp: lookup zapsidatabase: no such host
+2020-02-08 15:10:33.991   MAIN   ERR   Problem opening zapsi4 database: dial tcp: lookup zapsidatabase: no such host
+2020-02-08 15:10:47.525   MAIN   ERR   Problem opening zapsi4 database: dial tcp: lookup zapsidatabase: no such host
+2020-02-08 15:10:47.527   MAIN   ERR   Problem opening zapsi4 database: dial tcp: lookup zapsidatabase: no such host

@@ -1,0 +1,93 @@
+2020-02-08 14:05:48.976   Test alarm pocet pracovist   INF   Alarm started running
+2020-02-08 14:05:48.977   Test alarm pocet pracovist   INF   Processing takes 64ns
+2020-02-08 14:05:48.977   Test alarm pocet pracovist   INF   Alarm done, stopped running
+2020-02-08 14:10:55.413   Test alarm pocet pracovist   INF   Alarm started running
+2020-02-08 14:10:55.426   Test alarm pocet pracovist   ERR   sql: expected 0 destination arguments in Scan, not 1
+2020-02-08 14:10:55.426   Test alarm pocet pracovist   INF   Creating alarm record
+2020-02-08 14:10:55.426   Test alarm pocet pracovist   INF   Sending alarm email
+2020-02-08 14:10:55.427   Test alarm pocet pracovist   INF   Processing takes 12.704226ms
+2020-02-08 14:10:55.427   Test alarm pocet pracovist   INF   Alarm done, stopped running
+2020-02-08 14:11:30.844   Test alarm pocet pracovist   INF   Alarm started running
+2020-02-08 14:11:30.854   Test alarm pocet pracovist   ERR   sql: expected 0 destination arguments in Scan, not 1
+2020-02-08 14:11:30.854   Test alarm pocet pracovist   INF   Creating alarm record
+2020-02-08 14:11:30.854   Test alarm pocet pracovist   INF   Sending alarm email
+2020-02-08 14:11:30.854   Test alarm pocet pracovist   INF   Processing takes 10.546222ms
+2020-02-08 14:11:30.855   Test alarm pocet pracovist   INF   Alarm done, stopped running
+2020-02-08 14:11:48.425   Test alarm pocet pracovist   INF   Alarm started running
+2020-02-08 14:11:48.432   Test alarm pocet pracovist   INF   Creating alarm record
+2020-02-08 14:11:48.432   Test alarm pocet pracovist   INF   Sending alarm email
+2020-02-08 14:11:48.432   Test alarm pocet pracovist   INF   Processing takes 7.377217ms
+2020-02-08 14:11:48.432   Test alarm pocet pracovist   INF   Alarm done, stopped running
+2020-02-08 14:13:08.989   Test alarm pocet pracovist   INF   Alarm started running
+2020-02-08 14:13:08.997   Test alarm pocet pracovist   INF   Alarm has a result
+2020-02-08 14:13:08.997   Test alarm pocet pracovist   INF   Creating alarm record
+2020-02-08 14:13:08.997   Test alarm pocet pracovist   INF   Sending alarm email
+2020-02-08 14:13:08.997   Test alarm pocet pracovist   INF   Processing takes 8.458364ms
+2020-02-08 14:13:08.998   Test alarm pocet pracovist   INF   Alarm done, stopped running
+2020-02-08 14:16:22.503   Test alarm pocet pracovist   INF   Alarm started running
+2020-02-08 14:16:22.515   Test alarm pocet pracovist   INF   Alarm has a result
+2020-02-08 14:16:22.528   Test alarm pocet pracovist   INF   Creating alarm record
+2020-02-08 14:16:22.528   Test alarm pocet pracovist   INF   Sending alarm email
+2020-02-08 14:16:22.528   Test alarm pocet pracovist   INF   Processing takes 25.242576ms
+2020-02-08 14:16:22.528   Test alarm pocet pracovist   INF   Alarm done, stopped running
+2020-02-08 14:18:09.949   Test alarm pocet pracovist   INF   Alarm started running
+2020-02-08 14:18:09.956   Test alarm pocet pracovist   INF   Alarm has a result
+2020-02-08 14:18:09.972   Test alarm pocet pracovist   INF   Creating alarm record
+2020-02-08 14:18:09.983   Test alarm pocet pracovist   INF   Sending alarm email
+2020-02-08 14:18:09.983   Test alarm pocet pracovist   INF   Processing takes 34.709156ms
+2020-02-08 14:18:09.984   Test alarm pocet pracovist   INF   Alarm done, stopped running
+2020-02-08 14:22:33.954   Test alarm pocet pracovist   INF   Alarm started running
+2020-02-08 14:22:33.966   Test alarm pocet pracovist   INF   Alarm has a result
+2020-02-08 14:22:33.980   Test alarm pocet pracovist   INF   Creating alarm record
+2020-02-08 14:22:33.991   Test alarm pocet pracovist   INF   Sending alarm email
+2020-02-08 14:22:33.991   Test alarm pocet pracovist   INF   Processing takes 36.552965ms
+2020-02-08 14:22:33.991   Test alarm pocet pracovist   INF   Alarm done, stopped running
+2020-02-08 14:23:08.785   Test alarm pocet pracovist   INF   Alarm started running
+2020-02-08 14:23:08.795   Test alarm pocet pracovist   INF   Alarm has a result
+2020-02-08 14:23:08.805   Test alarm pocet pracovist   INF   Creating alarm record
+2020-02-08 14:23:08.823   Test alarm pocet pracovist   INF   Sending alarm email
+2020-02-08 14:23:08.823   Test alarm pocet pracovist   INF   Processing takes 37.772709ms
+2020-02-08 14:23:08.823   Test alarm pocet pracovist   INF   Alarm done, stopped running
+2020-02-08 14:23:32.506   Test alarm pocet pracovist   INF   Alarm started running
+2020-02-08 14:23:32.521   Test alarm pocet pracovist   INF   Alarm has a result
+2020-02-08 14:23:32.534   Test alarm pocet pracovist   INF   Creating alarm record
+2020-02-08 14:23:32.544   Test alarm pocet pracovist   INF   Sending alarm email
+2020-02-08 14:23:32.544   Test alarm pocet pracovist   INF   Processing takes 37.981781ms
+2020-02-08 14:23:32.544   Test alarm pocet pracovist   INF   Alarm done, stopped running
+2020-02-08 14:26:51.452   Test alarm pocet pracovist   INF   Alarm started running
+2020-02-08 14:26:51.463   Test alarm pocet pracovist   INF   Alarm has a result
+2020-02-08 14:26:51.489   Test alarm pocet pracovist   INF   Processing takes 36.526693ms
+2020-02-08 14:26:51.489   Test alarm pocet pracovist   INF   Alarm done, stopped running
+2020-02-08 14:27:27.774   Test alarm pocet pracovist   INF   Alarm started running
+2020-02-08 14:27:27.787   Test alarm pocet pracovist   INF   Alarm has a result
+2020-02-08 14:27:27.803   Test alarm pocet pracovist   INF   Updating alarm record
+2020-02-08 14:27:27.816   Test alarm pocet pracovist   INF   Processing takes 42.01187ms
+2020-02-08 14:27:27.816   Test alarm pocet pracovist   INF   Alarm done, stopped running
+2020-02-08 14:28:46.277   Test alarm pocet pracovist   INF   Alarm started running
+2020-02-08 14:28:46.284   Test alarm pocet pracovist   INF   Alarm has a result
+2020-02-08 14:28:46.297   Test alarm pocet pracovist   INF   Updating alarm record
+2020-02-08 14:28:46.312   Test alarm pocet pracovist   INF   Processing takes 34.948507ms
+2020-02-08 14:28:46.312   Test alarm pocet pracovist   INF   Alarm done, stopped running
+2020-02-08 14:29:06.203   Test alarm pocet pracovist   INF   Alarm started running
+2020-02-08 14:29:06.213   Test alarm pocet pracovist   INF   Alarm has a result
+2020-02-08 14:29:06.222   Test alarm pocet pracovist   INF   Updating alarm record
+2020-02-08 14:29:06.238   Test alarm pocet pracovist   INF   Processing takes 35.11679ms
+2020-02-08 14:29:06.238   Test alarm pocet pracovist   INF   Alarm done, stopped running
+2020-02-08 14:29:27.128   Test alarm pocet pracovist   INF   Alarm started running
+2020-02-08 14:29:27.136   Test alarm pocet pracovist   INF   Alarm has a result
+2020-02-08 14:29:27.152   Test alarm pocet pracovist   INF   Updating alarm record
+2020-02-08 14:29:27.172   Test alarm pocet pracovist   INF   Processing takes 44.00833ms
+2020-02-08 14:29:27.173   Test alarm pocet pracovist   INF   Alarm done, stopped running
+2020-02-08 14:39:50.822   Test alarm pocet pracovist   INF   Alarm started running
+2020-02-08 14:39:50.833   Test alarm pocet pracovist   INF   Alarm has a result
+2020-02-08 14:39:50.847   Test alarm pocet pracovist   INF   Creating alarm record
+2020-02-08 14:39:50.859   Test alarm pocet pracovist   INF   Sending alarm email
+2020-02-08 14:39:50.876   Test alarm pocet pracovist   INF   Processing takes 53.485262ms
+2020-02-08 14:39:50.877   Test alarm pocet pracovist   INF   Alarm done, stopped running
+2020-02-08 14:40:30.825   Test alarm pocet pracovist   INF   Alarm started running
+2020-02-08 14:40:30.838   Test alarm pocet pracovist   INF   Alarm has a result
+2020-02-08 14:40:30.851   Test alarm pocet pracovist   INF   Creating alarm record
+2020-02-08 14:40:30.864   Test alarm pocet pracovist   INF   Sending alarm email
+2020-02-08 14:40:31.286   Test alarm pocet pracovist   INF   Email sent
+2020-02-08 14:40:31.286   Test alarm pocet pracovist   INF   Processing takes 460.537452ms
+2020-02-08 14:40:31.287   Test alarm pocet pracovist   INF   Alarm done, stopped running

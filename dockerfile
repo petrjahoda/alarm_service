@@ -1,5 +1,5 @@
 FROM alpine:latest
-RUN apk update && apk upgrade && apk add bash && apk add procps && apk add nano
+RUN apk update && apk upgrade && apk add bash && apk add procps && apk add nano && apk add chromium
 RUN apk add chromium
 WORKDIR /bin
 COPY /linux /bin

@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const version = "2019.4.3.21"
+const version = "2020.1.2.8"
 const programName = "Alarm Service"
 const programDesription = "Creates alarms for workplaces"
 const deleteLogsAfter = 240 * time.Hour
@@ -30,17 +30,16 @@ func (p *program) Start(s service.Service) error {
 }
 
 func (p *program) run() {
-	//time.Sleep(10 * time.Second)
 	LogDirectoryFileCheck("MAIN")
 	LogInfo("MAIN", "Program version "+version+" started")
 	CreateConfigIfNotExists()
 	LoadSettingsFromConfigFile()
 	LogDebug("MAIN", "Using ["+DatabaseType+"] on "+DatabaseIpAddress+":"+DatabasePort+" with database "+DatabaseName)
-	CompleteDatabaseCheck()
 	for {
 		start := time.Now()
 		LogInfo("MAIN", "Program running")
 		DeleteOldLogFiles()
+		WriteProgramVersionIntoSettings()
 		UpdateActiveAlarms("MAIN")
 		LogInfo("MAIN", "Active alarms: "+strconv.Itoa(len(activeAlarms)))
 		for _, activeAlarm := range activeAlarms {
@@ -77,21 +76,6 @@ func main() {
 	err = s.Run()
 	if err != nil {
 		LogError("MAIN", "Problem starting "+serviceConfig.Name)
-	}
-}
-
-func CompleteDatabaseCheck() {
-	firstRunCheckComplete := false
-	for firstRunCheckComplete == false {
-		databaseOk := zapsi_database.CheckDatabase(DatabaseType, DatabaseIpAddress, DatabasePort, DatabaseLogin, DatabaseName, DatabasePassword)
-		tablesOk, err := zapsi_database.CheckTables(DatabaseType, DatabaseIpAddress, DatabasePort, DatabaseLogin, DatabaseName, DatabasePassword)
-		if err != nil {
-			LogInfo("MAIN", "Problem creating tables: "+err.Error())
-		}
-		if databaseOk && tablesOk {
-			WriteProgramVersionIntoSettings()
-			firstRunCheckComplete = true
-		}
 	}
 }
 

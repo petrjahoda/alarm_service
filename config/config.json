@@ -1,6 +1,6 @@
 {
   "DatabaseType": "postgres",
-  "IpAddress": "localhost",
+  "IpAddress": "zapsidatabase",
   "DatabaseName": "zapsi4",
   "Port": "5432",
   "Login": "postgres",
