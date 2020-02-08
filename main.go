@@ -30,16 +30,17 @@ func (p *program) Start(s service.Service) error {
 }
 
 func (p *program) run() {
+	time.Sleep(time.Second * 5)
 	LogDirectoryFileCheck("MAIN")
 	LogInfo("MAIN", "Program version "+version+" started")
 	CreateConfigIfNotExists()
 	LoadSettingsFromConfigFile()
 	LogDebug("MAIN", "Using ["+DatabaseType+"] on "+DatabaseIpAddress+":"+DatabasePort+" with database "+DatabaseName)
+	WriteProgramVersionIntoSettings()
 	for {
 		start := time.Now()
 		LogInfo("MAIN", "Program running")
 		DeleteOldLogFiles()
-		WriteProgramVersionIntoSettings()
 		UpdateActiveAlarms("MAIN")
 		LogInfo("MAIN", "Active alarms: "+strconv.Itoa(len(activeAlarms)))
 		for _, activeAlarm := range activeAlarms {
