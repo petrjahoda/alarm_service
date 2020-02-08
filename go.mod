@@ -4,13 +4,21 @@ go 1.13
 
 require (
 	github.com/PaesslerAG/gval v1.0.1
+	github.com/PaesslerAG/jsonpath v0.1.1 // indirect
+	github.com/denisenkom/go-mssqldb v0.0.0-20200206145737-bbfc9a55622e // indirect
 	github.com/dustin/go-humanize v1.0.0
-	github.com/fatih/color v1.7.0
+	github.com/fatih/color v1.9.0
+	github.com/go-sql-driver/mysql v1.5.0 // indirect
 	github.com/jinzhu/gorm v1.9.12
+	github.com/jinzhu/now v1.1.1 // indirect
 	github.com/kardianos/service v1.0.0
-	github.com/mattn/go-colorable v0.1.4 // indirect
-	github.com/mattn/go-isatty v0.0.11 // indirect
-	github.com/petrjahoda/zapsi_database v0.0.0-20200208063026-4e083039b076
+	github.com/lib/pq v1.3.0 // indirect
+	github.com/mattn/go-isatty v0.0.12 // indirect
+	github.com/mattn/go-sqlite3 v2.0.3+incompatible // indirect
+	github.com/petrjahoda/zapsi_database v0.0.0-20200208123037-b3d918fd87cd
+	golang.org/x/crypto v0.0.0-20200208060501-ecb85df21340 // indirect
+	golang.org/x/sys v0.0.0-20200202164722-d101bd2416d5 // indirect
+	google.golang.org/appengine v1.6.5 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 )

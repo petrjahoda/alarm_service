@@ -15,8 +15,6 @@ const programDesription = "Creates alarms for workplaces"
 const deleteLogsAfter = 240 * time.Hour
 const downloadInSeconds = 60
 
-var serviceRunning = false
-
 var (
 	activeAlarms  []zapsi_database.Alarm
 	runningAlarms []zapsi_database.Alarm
@@ -28,12 +26,11 @@ type program struct{}
 func (p *program) Start(s service.Service) error {
 	LogInfo("MAIN", "Starting "+programName+" on "+s.Platform())
 	go p.run()
-	serviceRunning = true
 	return nil
 }
 
 func (p *program) run() {
-	time.Sleep(10 * time.Second)
+	//time.Sleep(10 * time.Second)
 	LogDirectoryFileCheck("MAIN")
 	LogInfo("MAIN", "Program version "+version+" started")
 	CreateConfigIfNotExists()
@@ -58,9 +55,8 @@ func (p *program) run() {
 	}
 }
 func (p *program) Stop(s service.Service) error {
-	serviceRunning = false
 	for len(runningAlarms) != 0 {
-		LogInfo("MAIN", "Stopping, still running devices: "+strconv.Itoa(len(runningAlarms)))
+		LogInfo("MAIN", "Stopping, still running alarms: "+strconv.Itoa(len(runningAlarms)))
 		time.Sleep(1 * time.Second)
 	}
 	LogInfo("MAIN", "Stopped on platform "+s.Platform())
@@ -113,15 +109,6 @@ func WriteProgramVersionIntoSettings() {
 	settings.Value = version
 	db.Save(&settings)
 	LogDebug("MAIN", "Updated version in database for "+programName)
-}
-
-func CheckAlarm(device Device) bool {
-	for _, runningDevice := range runningAlarms {
-		if runningDevice.Name == device.Name {
-			return true
-		}
-	}
-	return false
 }
 
 func RunAlarm(alarm zapsi_database.Alarm) {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/jinzhu/gorm"
+	"github.com/petrjahoda/zapsi_database"
 	"gopkg.in/gomail.v2"
 	"os"
 	"strconv"
@@ -31,29 +32,29 @@ func SendMail(subject string, message string) {
 }
 
 func UpdateMailSettings() (error, string, int, string, string, string) {
-	connectionString, dialect := CheckDatabaseType()
+	connectionString, dialect := zapsi_database.CheckDatabaseType(DatabaseType, DatabaseIpAddress, DatabasePort, DatabaseLogin, DatabaseName, DatabasePassword)
 	db, err := gorm.Open(dialect, connectionString)
 	if err != nil {
 		LogError("MAIN", "Problem opening "+DatabaseName+" database: "+err.Error())
 		return nil, "", 0, "", "", ""
 	}
-	var settingsHost Setting
+	var settingsHost zapsi_database.Setting
 	db.Where("Key=?", "host").Find(&settingsHost)
 	host := settingsHost.Value
-	var settingsPort Setting
+	var settingsPort zapsi_database.Setting
 	db.Where("Key=?", "port").Find(&settingsPort)
 	port, err := strconv.Atoi(settingsPort.Value)
 	if err != nil {
 		LogError("MAIN", "Problem parsing port for email, using default port 587 "+err.Error())
 		port = 587
 	}
-	var settingsUsername Setting
+	var settingsUsername zapsi_database.Setting
 	db.Where("Key=?", "username").Find(&settingsUsername)
 	username := settingsUsername.Value
-	var settingsPassword Setting
+	var settingsPassword zapsi_database.Setting
 	db.Where("Key=?", "password").Find(&settingsPassword)
 	password := settingsPassword.Value
-	var settingsEmail Setting
+	var settingsEmail zapsi_database.Setting
 	db.Where("Key=?", "email").Find(&settingsEmail)
 	email := settingsEmail.Value
 	LogDebug("MAIN", "Mail settings: "+host+":"+strconv.Itoa(port)+" ["+username+"] ["+password+"]")
