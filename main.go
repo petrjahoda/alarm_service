@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const version = "2020.1.2.8"
+const version = "2020.1.2.9"
 const programName = "Alarm Service"
 const programDesription = "Creates alarms for workplaces"
 const deleteLogsAfter = 240 * time.Hour

@@ -61,6 +61,28 @@ func SendAlarmEmail(alarm zapsi_database.Alarm) {
 		return
 	}
 	m := gomail.NewMessage()
+	m.SetHeader("From", username)
+	m.SetHeader("Subject", alarm.MessageHeader)
+	m.SetBody("text/html", alarm.MessageText)
+	UpdateRecipients(alarm, m)
+	UpdateAttachements(alarm, m)
+
+	d := gomail.NewDialer(host, port, username, password) // PETRzpsMAIL79..
+	if emailSentError := d.DialAndSend(m); emailSentError != nil {
+		LogError(alarm.Name, "Email not sent: "+emailSentError.Error())
+	} else {
+		LogInfo(alarm.Name, "Email sent")
+	}
+}
+
+func UpdateAttachements(alarm zapsi_database.Alarm, m *gomail.Message) {
+	if len(alarm.Pdf) > 0 {
+		ConvertToPdf(alarm)
+		m.Attach(strconv.Itoa(int(alarm.ID)) + ".pdf")
+	}
+}
+
+func UpdateRecipients(alarm zapsi_database.Alarm, m *gomail.Message) {
 	if strings.Contains(alarm.Recipients, ",") {
 		emails := strings.Split(alarm.Recipients, ",")
 		m.SetHeader("To", emails...)
@@ -69,20 +91,6 @@ func SendAlarmEmail(alarm zapsi_database.Alarm) {
 		m.SetHeader("To", emails...)
 	} else {
 		m.SetHeader("To", alarm.Recipients)
-	}
-	m.SetHeader("From", username)
-	m.SetHeader("Subject", alarm.MessageHeader)
-	m.SetBody("text/html", alarm.MessageText)
-	if len(alarm.Pdf) > 0 {
-		ConvertToPdf(alarm)
-		m.Attach(strconv.Itoa(int(alarm.ID)) + ".pdf")
-	}
-
-	d := gomail.NewDialer(host, port, username, password) // PETRzpsMAIL79..
-	if emailSentError := d.DialAndSend(m); emailSentError != nil {
-		LogError(alarm.Name, "Email not sent: "+emailSentError.Error())
-	} else {
-		LogInfo(alarm.Name, "Email sent")
 	}
 }
 
