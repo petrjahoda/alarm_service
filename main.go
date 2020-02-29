@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const version = "2020.1.2.9"
+const version = "2020.1.2.29"
 const programName = "Alarm Service"
 const programDesription = "Creates alarms for workplaces"
 const deleteLogsAfter = 240 * time.Hour
@@ -30,7 +30,6 @@ func (p *program) Start(s service.Service) error {
 }
 
 func (p *program) run() {
-	time.Sleep(time.Second * 5)
 	LogDirectoryFileCheck("MAIN")
 	LogInfo("MAIN", "Program version "+version+" started")
 	CreateConfigIfNotExists()
@@ -81,6 +80,8 @@ func main() {
 }
 
 func WriteProgramVersionIntoSettings() {
+	LogInfo("MAIN", "Updating program version in database")
+	timer := time.Now()
 	connectionString, dialect := zapsi_database.CheckDatabaseType(DatabaseType, DatabaseIpAddress, DatabasePort, DatabaseLogin, DatabaseName, DatabasePassword)
 	db, err := gorm.Open(dialect, connectionString)
 	if err != nil {
@@ -93,19 +94,18 @@ func WriteProgramVersionIntoSettings() {
 	settings.Name = programName
 	settings.Value = version
 	db.Save(&settings)
-	LogDebug("MAIN", "Updated version in database for "+programName)
+	LogInfo("MAIN", "Program version updated, elapsed: "+time.Since(timer).String())
 }
 
 func RunAlarm(alarm zapsi_database.Alarm) {
-	LogInfo(alarm.Name, "Alarm started running")
+	LogInfo(alarm.Name, "Alarm loop started")
+	timer := time.Now()
 	alarmSync.Lock()
 	runningAlarms = append(runningAlarms, alarm)
 	alarmSync.Unlock()
-	start := time.Now()
 	ProcessAlarm(alarm)
-	LogInfo(alarm.Name, "Processing takes "+time.Since(start).String())
 	RemoveAlarmFromRunningDevices(alarm)
-	LogInfo(alarm.Name, "Alarm done, stopped running")
+	LogInfo("MAIN", "Alarm loop ended, elapsed: "+time.Since(timer).String())
 
 }
 
@@ -120,6 +120,8 @@ func RemoveAlarmFromRunningDevices(alarm zapsi_database.Alarm) {
 }
 
 func UpdateActiveAlarms(reference string) {
+	LogInfo("MAIN", "Updating active alarms")
+	timer := time.Now()
 	connectionString, dialect := zapsi_database.CheckDatabaseType(DatabaseType, DatabaseIpAddress, DatabasePort, DatabaseLogin, DatabaseName, DatabasePassword)
 	db, err := gorm.Open(dialect, connectionString)
 	if err != nil {
@@ -129,4 +131,6 @@ func UpdateActiveAlarms(reference string) {
 	}
 	defer db.Close()
 	db.Find(&activeAlarms)
+	LogInfo("MAIN", "Active alarms updated, elapsed: "+time.Since(timer).String())
+
 }

@@ -11,22 +11,30 @@ import (
 	"time"
 )
 
+type Result struct {
+	Result string
+}
+
 func ProcessAlarm(alarm zapsi_database.Alarm) {
-	alarmHasResult := CheckAlarmResult(alarm)
+	LogInfo(alarm.Name, "Processing alarm")
+	timer := time.Now()
+	alarmHasResult, alarmResult := CheckAlarmResult(alarm)
 	alarmHasRecord := CheckAlarmRecord(alarm)
 	if alarmHasResult && !alarmHasRecord {
 		CreateAlarmRecord(alarm)
-		SendAlarmEmail(alarm)
+		SendAlarmEmail(alarm, alarmResult)
 	} else if alarmHasRecord && !alarmHasResult {
 		CloseAlarmRecord(alarm)
 	} else if alarmHasResult && alarmHasRecord {
 		UpdateAlarm(alarm)
 	}
+	LogInfo("MAIN", "Alarm processed, elapsed: "+time.Since(timer).String())
 
 }
 
 func UpdateAlarm(alarm zapsi_database.Alarm) {
 	LogInfo(alarm.Name, "Updating alarm record")
+	timer := time.Now()
 	connectionString, dialect := zapsi_database.CheckDatabaseType(DatabaseType, DatabaseIpAddress, DatabasePort, DatabaseLogin, DatabaseName, DatabasePassword)
 	db, err := gorm.Open(dialect, connectionString)
 	if err != nil {
@@ -37,10 +45,13 @@ func UpdateAlarm(alarm zapsi_database.Alarm) {
 	db.Where("alarm_id = ?", alarm.ID).Where("date_time_end is null").Find(&alarmRecord)
 	alarmRecord.Duration = time.Now().Sub(alarmRecord.DateTimeStart)
 	db.Save(&alarmRecord)
+	LogInfo(alarm.Name, "Updating alarm record done, elapsed: "+time.Since(timer).String())
+
 }
 
 func CloseAlarmRecord(alarm zapsi_database.Alarm) {
 	LogInfo(alarm.Name, "Closing alarm record")
+	timer := time.Now()
 	connectionString, dialect := zapsi_database.CheckDatabaseType(DatabaseType, DatabaseIpAddress, DatabasePort, DatabaseLogin, DatabaseName, DatabasePassword)
 	db, err := gorm.Open(dialect, connectionString)
 	if err != nil {
@@ -52,10 +63,13 @@ func CloseAlarmRecord(alarm zapsi_database.Alarm) {
 	alarmRecord.DateTimeEnd = sql.NullTime{Time: time.Now(), Valid: true}
 	alarmRecord.Duration = time.Now().Sub(alarmRecord.DateTimeStart)
 	db.Save(&alarmRecord)
+	LogInfo(alarm.Name, "Closing alarm record done, elapsed: "+time.Since(timer).String())
+
 }
 
-func SendAlarmEmail(alarm zapsi_database.Alarm) {
+func SendAlarmEmail(alarm zapsi_database.Alarm, result string) {
 	LogInfo(alarm.Name, "Sending alarm email")
+	timer := time.Now()
 	err, host, port, username, password, _ := UpdateMailSettings()
 	if err != nil {
 		return
@@ -63,7 +77,7 @@ func SendAlarmEmail(alarm zapsi_database.Alarm) {
 	m := gomail.NewMessage()
 	m.SetHeader("From", username)
 	m.SetHeader("Subject", alarm.MessageHeader)
-	m.SetBody("text/html", alarm.MessageText)
+	m.SetBody("text/html", alarm.MessageText+"\n\n"+result)
 	UpdateRecipients(alarm, m)
 	UpdateAttachements(alarm, m)
 
@@ -73,6 +87,8 @@ func SendAlarmEmail(alarm zapsi_database.Alarm) {
 	} else {
 		LogInfo(alarm.Name, "Email sent")
 	}
+	LogInfo(alarm.Name, "Sending alarm mail done, elapsed: "+time.Since(timer).String())
+
 }
 
 func UpdateAttachements(alarm zapsi_database.Alarm, m *gomail.Message) {
@@ -136,7 +152,8 @@ func UpdateMailSettings() (error, string, int, string, string, string) {
 }
 
 func CreateAlarmRecord(alarm zapsi_database.Alarm) {
-	LogInfo(alarm.Name, "Creating alarm record")
+	LogInfo(alarm.Name, "Checking alarm record")
+	timer := time.Now()
 	connectionString, dialect := zapsi_database.CheckDatabaseType(DatabaseType, DatabaseIpAddress, DatabasePort, DatabaseLogin, DatabaseName, DatabasePassword)
 	db, err := gorm.Open(dialect, connectionString)
 	if err != nil {
@@ -151,9 +168,13 @@ func CreateAlarmRecord(alarm zapsi_database.Alarm) {
 		alarmRecord.WorkplaceId = sql.NullInt32{Int32: int32(alarm.WorkplaceId), Valid: true}
 	}
 	db.Save(&alarmRecord)
+	LogInfo(alarm.Name, "Alarm record creating done, elapsed: "+time.Since(timer).String())
+
 }
 
 func CheckAlarmRecord(alarm zapsi_database.Alarm) bool {
+	LogInfo(alarm.Name, "Checking open alarm record")
+	timer := time.Now()
 	connectionString, dialect := zapsi_database.CheckDatabaseType(DatabaseType, DatabaseIpAddress, DatabasePort, DatabaseLogin, DatabaseName, DatabasePassword)
 	db, err := gorm.Open(dialect, connectionString)
 	if err != nil {
@@ -164,26 +185,33 @@ func CheckAlarmRecord(alarm zapsi_database.Alarm) bool {
 	var alarmRecord zapsi_database.AlarmRecord
 	db.Where("alarm_id = ?", alarm.ID).Where("date_time_end is null").Find(&alarmRecord)
 	alarmHasOpenRecord := alarmRecord.ID > 0
+	LogInfo(alarm.Name, "Checking alarm record done, elapsed: "+time.Since(timer).String())
 	if alarmHasOpenRecord {
 		return true
 	}
 	return false
 }
 
-func CheckAlarmResult(alarm zapsi_database.Alarm) bool {
+func CheckAlarmResult(alarm zapsi_database.Alarm) (bool, string) {
+	LogInfo(alarm.Name, "Checking alarm results")
+	timer := time.Now()
 	connectionString, dialect := zapsi_database.CheckDatabaseType(DatabaseType, DatabaseIpAddress, DatabasePort, DatabaseLogin, DatabaseName, DatabasePassword)
 	db, err := gorm.Open(dialect, connectionString)
 	if err != nil {
 		LogError(alarm.Name, "Problem opening "+DatabaseName+" database: "+err.Error())
-		return false
+		return false, ""
 	}
 	defer db.Close()
-	row := db.Raw(alarm.SqlCommand).Row()
-	err = row.Scan()
-	if err != nil {
+	var result Result
+	db.Raw(alarm.SqlCommand).Scan(&result)
+	alarmHasResult := len(result.Result) > 0
+	if !alarmHasResult {
 		LogInfo(alarm.Name, "Alarm has no results")
-		return false
+		LogInfo(alarm.Name, "Checking alarm results done, elapsed: "+time.Since(timer).String())
+		return false, ""
+
 	}
 	LogInfo(alarm.Name, "Alarm has a result")
-	return true
+	LogInfo(alarm.Name, "Checking alarm results done, elapsed: "+time.Since(timer).String())
+	return true, result.Result
 }

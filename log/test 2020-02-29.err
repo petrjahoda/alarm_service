@@ -1,0 +1,2 @@
+2020-02-29 13:31:06.112   test   ERR   Email not sent: gomail: could not send email 1: gomail: invalid address "": mail: no address
+2020-02-29 13:33:03.117   test   ERR   Email not sent: gomail: could not send email 1: gomail: invalid address "": mail: no address
