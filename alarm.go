@@ -40,6 +40,7 @@ func UpdateAlarm(alarm zapsi_database.Alarm) {
 	if err != nil {
 		LogError(alarm.Name, "Problem opening "+DatabaseName+" database: "+err.Error())
 	}
+	db.LogMode(false)
 	defer db.Close()
 	var alarmRecord zapsi_database.AlarmRecord
 	db.Where("alarm_id = ?", alarm.ID).Where("date_time_end is null").Find(&alarmRecord)
@@ -57,6 +58,7 @@ func CloseAlarmRecord(alarm zapsi_database.Alarm) {
 	if err != nil {
 		LogError(alarm.Name, "Problem opening "+DatabaseName+" database: "+err.Error())
 	}
+	db.LogMode(false)
 	defer db.Close()
 	var alarmRecord zapsi_database.AlarmRecord
 	db.Where("alarm_id = ?", alarm.ID).Where("date_time_end is null").Find(&alarmRecord)
@@ -128,6 +130,8 @@ func UpdateMailSettings() (error, string, int, string, string, string) {
 		LogError("MAIN", "Problem opening "+DatabaseName+" database: "+err.Error())
 		return nil, "", 0, "", "", ""
 	}
+	db.LogMode(false)
+	defer db.Close()
 	var settingsHost zapsi_database.Setting
 	db.Where("name=?", "host").Find(&settingsHost)
 	host := settingsHost.Value
@@ -147,7 +151,7 @@ func UpdateMailSettings() (error, string, int, string, string, string) {
 	var settingsEmail zapsi_database.Setting
 	db.Where("name=?", "email").Find(&settingsEmail)
 	email := settingsEmail.Value
-	defer db.Close()
+
 	return err, host, port, username, password, email
 }
 
@@ -159,6 +163,7 @@ func CreateAlarmRecord(alarm zapsi_database.Alarm) {
 	if err != nil {
 		LogError(alarm.Name, "Problem opening "+DatabaseName+" database: "+err.Error())
 	}
+	db.LogMode(false)
 	defer db.Close()
 	var alarmRecord zapsi_database.AlarmRecord
 	alarmRecord.DateTimeStart = time.Now()
@@ -181,6 +186,7 @@ func CheckAlarmRecord(alarm zapsi_database.Alarm) bool {
 		LogError(alarm.Name, "Problem opening "+DatabaseName+" database: "+err.Error())
 		return false
 	}
+	db.LogMode(false)
 	defer db.Close()
 	var alarmRecord zapsi_database.AlarmRecord
 	db.Where("alarm_id = ?", alarm.ID).Where("date_time_end is null").Find(&alarmRecord)
@@ -201,6 +207,7 @@ func CheckAlarmResult(alarm zapsi_database.Alarm) (bool, string) {
 		LogError(alarm.Name, "Problem opening "+DatabaseName+" database: "+err.Error())
 		return false, ""
 	}
+	db.LogMode(false)
 	defer db.Close()
 	var result Result
 	db.Raw(alarm.SqlCommand).Scan(&result)

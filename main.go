@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const version = "2020.1.3.31"
+const version = "2020.2.2.18"
 const programName = "Alarm Service"
 const programDesription = "Creates alarms for workplaces"
 const deleteLogsAfter = 240 * time.Hour
@@ -20,6 +20,8 @@ var (
 	runningAlarms []zapsi_database.Alarm
 	alarmSync     sync.Mutex
 )
+
+var serviceDirectory string
 
 type program struct{}
 
@@ -62,6 +64,10 @@ func (p *program) Stop(s service.Service) error {
 	return nil
 }
 
+func init() {
+	serviceDirectory = GetDirectory()
+}
+
 func main() {
 	serviceConfig := &service.Config{
 		Name:        programName,
@@ -88,6 +94,7 @@ func WriteProgramVersionIntoSettings() {
 		LogError("MAIN", "Problem opening "+DatabaseName+" database: "+err.Error())
 		return
 	}
+	db.LogMode(false)
 	defer db.Close()
 	var settings zapsi_database.Setting
 	db.Where("name=?", programName).Find(&settings)
@@ -129,6 +136,7 @@ func UpdateActiveAlarms(reference string) {
 		activeAlarms = nil
 		return
 	}
+	db.LogMode(false)
 	defer db.Close()
 	db.Find(&activeAlarms)
 	LogInfo("MAIN", "Active alarms updated, elapsed: "+time.Since(timer).String())
