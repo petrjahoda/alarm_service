@@ -1,10 +1,5 @@
 # Alarm Service
 
-
-## Installation
-* use docker image from https://cloud.docker.com/repository/docker/petrjahoda/zapsi_service
-* use linux, mac or windows version and make it run like a service
-
 ## Description
 Go service that send alarm emails, when sql returns a row
 
@@ -22,4 +17,4 @@ select to_char(now(), 'Day') like '%Saturday%' and extract(hour from now()) = 12
 ```sql
 select (select count(*) from zapsi3.public.state_records where date_time_end is null and state_id=3) > 5 as result;
 ```    
-www.zapsi.eu © 2020
+Petr Jahoda © 2020

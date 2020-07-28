@@ -1,27 +1,26 @@
 package main
 
 import (
-	"github.com/jinzhu/gorm"
 	"github.com/kardianos/service"
-	"github.com/petrjahoda/zapsi_database"
+	"github.com/petrjahoda/database"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	"strconv"
 	"sync"
 	"time"
 )
 
-const version = "2020.2.2.18"
+const version = "2020.3.1.28"
 const programName = "Alarm Service"
 const programDesription = "Creates alarms for workplaces"
-const deleteLogsAfter = 240 * time.Hour
 const downloadInSeconds = 60
+const config = "user=postgres password=Zps05..... dbname=version3 host=database port=5432 sslmode=disable"
 
 var (
-	activeAlarms  []zapsi_database.Alarm
-	runningAlarms []zapsi_database.Alarm
+	activeAlarms  []database.Alarm
+	runningAlarms []database.Alarm
 	alarmSync     sync.Mutex
 )
-
-var serviceDirectory string
 
 type program struct{}
 
@@ -32,16 +31,11 @@ func (p *program) Start(s service.Service) error {
 }
 
 func (p *program) run() {
-	LogDirectoryFileCheck("MAIN")
 	LogInfo("MAIN", "Program version "+version+" started")
-	CreateConfigIfNotExists()
-	LoadSettingsFromConfigFile()
-	LogDebug("MAIN", "Using ["+DatabaseType+"] on "+DatabaseIpAddress+":"+DatabasePort+" with database "+DatabaseName)
 	WriteProgramVersionIntoSettings()
 	for {
 		start := time.Now()
 		LogInfo("MAIN", "Program running")
-		DeleteOldLogFiles()
 		UpdateActiveAlarms("MAIN")
 		LogInfo("MAIN", "Active alarms: "+strconv.Itoa(len(activeAlarms)))
 		for _, activeAlarm := range activeAlarms {
@@ -64,10 +58,6 @@ func (p *program) Stop(s service.Service) error {
 	return nil
 }
 
-func init() {
-	serviceDirectory = GetDirectory()
-}
-
 func main() {
 	serviceConfig := &service.Config{
 		Name:        programName,
@@ -88,15 +78,12 @@ func main() {
 func WriteProgramVersionIntoSettings() {
 	LogInfo("MAIN", "Updating program version in database")
 	timer := time.Now()
-	connectionString, dialect := zapsi_database.CheckDatabaseType(DatabaseType, DatabaseIpAddress, DatabasePort, DatabaseLogin, DatabaseName, DatabasePassword)
-	db, err := gorm.Open(dialect, connectionString)
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	if err != nil {
-		LogError("MAIN", "Problem opening "+DatabaseName+" database: "+err.Error())
+		LogError("MAIN", "Problem opening  database: "+err.Error())
 		return
 	}
-	db.LogMode(false)
-	defer db.Close()
-	var settings zapsi_database.Setting
+	var settings database.Setting
 	db.Where("name=?", programName).Find(&settings)
 	settings.Name = programName
 	settings.Value = version
@@ -104,7 +91,7 @@ func WriteProgramVersionIntoSettings() {
 	LogInfo("MAIN", "Program version updated, elapsed: "+time.Since(timer).String())
 }
 
-func RunAlarm(alarm zapsi_database.Alarm) {
+func RunAlarm(alarm database.Alarm) {
 	LogInfo(alarm.Name, "Alarm loop started")
 	timer := time.Now()
 	alarmSync.Lock()
@@ -116,7 +103,7 @@ func RunAlarm(alarm zapsi_database.Alarm) {
 
 }
 
-func RemoveAlarmFromRunningDevices(alarm zapsi_database.Alarm) {
+func RemoveAlarmFromRunningDevices(alarm database.Alarm) {
 	for idx, runningAlarm := range runningAlarms {
 		if alarm.Name == runningAlarm.Name {
 			alarmSync.Lock()
@@ -129,15 +116,12 @@ func RemoveAlarmFromRunningDevices(alarm zapsi_database.Alarm) {
 func UpdateActiveAlarms(reference string) {
 	LogInfo("MAIN", "Updating active alarms")
 	timer := time.Now()
-	connectionString, dialect := zapsi_database.CheckDatabaseType(DatabaseType, DatabaseIpAddress, DatabasePort, DatabaseLogin, DatabaseName, DatabasePassword)
-	db, err := gorm.Open(dialect, connectionString)
+	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	if err != nil {
-		LogError(reference, "Problem opening "+DatabaseName+" database: "+err.Error())
+		LogError(reference, "Problem opening  database: "+err.Error())
 		activeAlarms = nil
 		return
 	}
-	db.LogMode(false)
-	defer db.Close()
 	db.Find(&activeAlarms)
 	LogInfo("MAIN", "Active alarms updated, elapsed: "+time.Since(timer).String())
 
