@@ -118,7 +118,7 @@ func UpdateRecipients(alarm database.Alarm, m *gomail.Message) {
 func ConvertToPdf(alarm database.Alarm) {
 	LogInfo(alarm.Name, "Creating pdf from "+alarm.Pdf)
 	outputName := strconv.Itoa(int(alarm.ID)) + ".pdf"
-	cmd := exec.Command("/usr/bin/chromium-browser", "--headless", "--disable-gpu", "--no-sandbox", "--print-to-pdf="+outputName, alarm.Pdf)
+	cmd := exec.Command("chromium-browser", "--headless", "--disable-gpu", "--no-sandbox", "--print-to-pdf="+outputName, alarm.Pdf)
 	err := cmd.Run()
 	if err != nil {
 		LogError(alarm.Name, "Problem creating pdf: "+err.Error())

@@ -13,8 +13,8 @@ import (
 const version = "2020.3.1.30"
 const programName = "Alarm Service"
 const programDescription = "Creates alarms for workplaces"
-const downloadInSeconds = 1
-const config = "user=postgres password=Zps05..... dbname=version3 host=localhost port=5432 sslmode=disable"
+const downloadInSeconds = 60
+const config = "user=postgres password=Zps05..... dbname=version3 host=database port=5432 sslmode=disable"
 
 var (
 	activeAlarms  []database.Alarm
