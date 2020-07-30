@@ -22,8 +22,11 @@ func ProcessAlarm(alarm database.Alarm) {
 	alarmHasResult, alarmResult := CheckAlarmResult(alarm)
 	alarmHasRecord := CheckAlarmRecord(alarm)
 	if alarmHasResult && !alarmHasRecord {
-		CreateAlarmRecord(alarm)
-		SendAlarmEmail(alarm, alarmResult)
+		emailSent := SendAlarmEmail(alarm, alarmResult)
+		if emailSent {
+			CreateAlarmRecord(alarm)
+		}
+
 	} else if alarmHasRecord && !alarmHasResult {
 		CloseAlarmRecord(alarm)
 	} else if alarmHasResult && alarmHasRecord {
@@ -40,6 +43,8 @@ func UpdateAlarm(alarm database.Alarm) {
 	if err != nil {
 		LogError(alarm.Name, "Problem opening database: "+err.Error())
 	}
+	sqlDB, err := db.DB()
+	defer sqlDB.Close()
 	var alarmRecord database.AlarmRecord
 	db.Where("alarm_id = ?", alarm.ID).Where("date_time_end is null").Find(&alarmRecord)
 	alarmRecord.Duration = time.Now().Sub(alarmRecord.DateTimeStart)
@@ -55,6 +60,8 @@ func CloseAlarmRecord(alarm database.Alarm) {
 	if err != nil {
 		LogError(alarm.Name, "Problem opening database: "+err.Error())
 	}
+	sqlDB, err := db.DB()
+	defer sqlDB.Close()
 	var alarmRecord database.AlarmRecord
 	db.Where("alarm_id = ?", alarm.ID).Where("date_time_end is null").Find(&alarmRecord)
 	alarmRecord.DateTimeEnd = sql.NullTime{Time: time.Now(), Valid: true}
@@ -64,12 +71,12 @@ func CloseAlarmRecord(alarm database.Alarm) {
 
 }
 
-func SendAlarmEmail(alarm database.Alarm, result string) {
+func SendAlarmEmail(alarm database.Alarm, result string) bool {
 	LogInfo(alarm.Name, "Sending alarm email")
 	timer := time.Now()
 	err, host, port, username, password, _ := UpdateMailSettings()
 	if err != nil {
-		return
+		return false
 	}
 	m := gomail.NewMessage()
 	m.SetHeader("From", username)
@@ -78,14 +85,15 @@ func SendAlarmEmail(alarm database.Alarm, result string) {
 	UpdateRecipients(alarm, m)
 	UpdateAttachements(alarm, m)
 
-	d := gomail.NewDialer(host, port, username, password) // PETRzpsMAIL79..
+	d := gomail.NewDialer(host, port, username, password)
 	if emailSentError := d.DialAndSend(m); emailSentError != nil {
 		LogError(alarm.Name, "Email not sent: "+emailSentError.Error())
+		return false
 	} else {
 		LogInfo(alarm.Name, "Email sent")
 	}
 	LogInfo(alarm.Name, "Sending alarm mail done, elapsed: "+time.Since(timer).String())
-
+	return true
 }
 
 func UpdateAttachements(alarm database.Alarm, m *gomail.Message) {
@@ -124,6 +132,8 @@ func UpdateMailSettings() (error, string, int, string, string, string) {
 		LogError("MAIN", "Problem opening database: "+err.Error())
 		return nil, "", 0, "", "", ""
 	}
+	sqlDB, err := db.DB()
+	defer sqlDB.Close()
 	var settingsHost database.Setting
 	db.Where("name=?", "host").Find(&settingsHost)
 	host := settingsHost.Value
@@ -154,6 +164,8 @@ func CreateAlarmRecord(alarm database.Alarm) {
 	if err != nil {
 		LogError(alarm.Name, "Problem opening database: "+err.Error())
 	}
+	sqlDB, err := db.DB()
+	defer sqlDB.Close()
 	var alarmRecord database.AlarmRecord
 	alarmRecord.DateTimeStart = time.Now()
 	alarmRecord.Duration = 0
@@ -174,6 +186,8 @@ func CheckAlarmRecord(alarm database.Alarm) bool {
 		LogError(alarm.Name, "Problem opening database: "+err.Error())
 		return false
 	}
+	sqlDB, err := db.DB()
+	defer sqlDB.Close()
 	var alarmRecord database.AlarmRecord
 	db.Where("alarm_id = ?", alarm.ID).Where("date_time_end is null").Find(&alarmRecord)
 	alarmHasOpenRecord := alarmRecord.ID > 0
@@ -192,6 +206,8 @@ func CheckAlarmResult(alarm database.Alarm) (bool, string) {
 		LogError(alarm.Name, "Problem opening database: "+err.Error())
 		return false, ""
 	}
+	sqlDB, err := db.DB()
+	defer sqlDB.Close()
 	var result Result
 	db.Raw(alarm.SqlCommand).Scan(&result)
 	alarmHasResult := len(result.Result) > 0

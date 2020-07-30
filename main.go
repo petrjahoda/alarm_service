@@ -10,11 +10,11 @@ import (
 	"time"
 )
 
-const version = "2020.3.1.28"
+const version = "2020.3.1.30"
 const programName = "Alarm Service"
-const programDesription = "Creates alarms for workplaces"
-const downloadInSeconds = 60
-const config = "user=postgres password=Zps05..... dbname=version3 host=database port=5432 sslmode=disable"
+const programDescription = "Creates alarms for workplaces"
+const downloadInSeconds = 1
+const config = "user=postgres password=Zps05..... dbname=version3 host=localhost port=5432 sslmode=disable"
 
 var (
 	activeAlarms  []database.Alarm
@@ -62,7 +62,7 @@ func main() {
 	serviceConfig := &service.Config{
 		Name:        programName,
 		DisplayName: programName,
-		Description: programDesription,
+		Description: programDescription,
 	}
 	prg := &program{}
 	s, err := service.New(prg, serviceConfig)
@@ -83,6 +83,8 @@ func WriteProgramVersionIntoSettings() {
 		LogError("MAIN", "Problem opening  database: "+err.Error())
 		return
 	}
+	sqlDB, err := db.DB()
+	defer sqlDB.Close()
 	var settings database.Setting
 	db.Where("name=?", programName).Find(&settings)
 	settings.Name = programName
@@ -122,6 +124,8 @@ func UpdateActiveAlarms(reference string) {
 		activeAlarms = nil
 		return
 	}
+	sqlDB, err := db.DB()
+	defer sqlDB.Close()
 	db.Find(&activeAlarms)
 	LogInfo("MAIN", "Active alarms updated, elapsed: "+time.Since(timer).String())
 
