@@ -17,4 +17,4 @@ select to_char(now(), 'Day') like '%Saturday%' and extract(hour from now()) = 12
 ```sql
 select (select count(*) from zapsi3.public.state_records where date_time_end is null and state_id=3) > 5 as result;
 ```    
-Petr Jahoda © 2020
+tGMS © 2020 Petr Jahoda
