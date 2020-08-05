@@ -15,6 +15,6 @@ select to_char(now(), 'Day') like '%Saturday%' and extract(hour from now()) = 12
 ```
 * Sends and email when more than 5 workplaces are in production
 ```sql
-select (select count(*) from zapsi3.public.state_records where date_time_end is null and state_id=3) > 5 as result;
+select (select count(*) from version3.public.state_records where state_id=3 order by OID desc limit 1) > 5 as result;
 ```    
 tGMS © 2020 Petr Jahoda
