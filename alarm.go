@@ -16,28 +16,28 @@ type Result struct {
 	Result string
 }
 
-func ProcessAlarm(alarm database.Alarm) {
-	LogInfo(alarm.Name, "Processing alarm")
+func processAlarm(alarm database.Alarm) {
+	logInfo(alarm.Name, "Processing alarm")
 	timer := time.Now()
-	alarmHasResult, alarmResult := ReadAlarmResult(alarm)
-	alarmHasRecord := ReadAlarmRecord(alarm)
+	alarmHasResult, alarmResult := readAlarmResult(alarm)
+	alarmHasRecord := readAlarmRecord(alarm)
 	if alarmHasResult && !alarmHasRecord {
-		emailSent := SendAlarmEmail(alarm, alarmResult)
+		emailSent := sendAlarmEmail(alarm, alarmResult)
 		if emailSent {
-			CreateAlarmRecord(alarm)
+			createAlarmRecord(alarm)
 		}
 	} else if alarmHasRecord && !alarmHasResult {
-		UpdateAlarmRecordToClosed(alarm)
+		updateAlarmRecordToClosed(alarm)
 	}
-	LogInfo("MAIN", "Alarm processed in "+time.Since(timer).String())
+	logInfo("MAIN", "Alarm processed in "+time.Since(timer).String())
 }
 
-func UpdateAlarmRecordToClosed(alarm database.Alarm) {
-	LogInfo(alarm.Name, "Updating alarm record to closed")
+func updateAlarmRecordToClosed(alarm database.Alarm) {
+	logInfo(alarm.Name, "Updating alarm record to closed")
 	timer := time.Now()
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	if err != nil {
-		LogError(alarm.Name, "Problem opening database: "+err.Error())
+		logError(alarm.Name, "Problem opening database: "+err.Error())
 	}
 	sqlDB, err := db.DB()
 	defer sqlDB.Close()
@@ -45,13 +45,13 @@ func UpdateAlarmRecordToClosed(alarm database.Alarm) {
 	db.Where("alarm_id = ?", alarm.ID).Where("date_time_end is null").Find(&alarmRecord)
 	alarmRecord.DateTimeEnd = sql.NullTime{Time: time.Now(), Valid: true}
 	db.Save(&alarmRecord)
-	LogInfo(alarm.Name, "Updated alarm record to closed in "+time.Since(timer).String())
+	logInfo(alarm.Name, "Updated alarm record to closed in "+time.Since(timer).String())
 }
 
-func SendAlarmEmail(alarm database.Alarm, result string) bool {
-	LogInfo(alarm.Name, "Sending alarm email")
+func sendAlarmEmail(alarm database.Alarm, result string) bool {
+	logInfo(alarm.Name, "Sending alarm email")
 	timer := time.Now()
-	err, host, port, username, password, _ := ReadMailSettings(alarm)
+	err, host, port, username, password, _ := readMailSettings(alarm)
 	if err != nil {
 		return false
 	}
@@ -59,27 +59,27 @@ func SendAlarmEmail(alarm database.Alarm, result string) bool {
 	m.SetHeader("From", username)
 	m.SetHeader("Subject", alarm.MessageHeader)
 	m.SetBody("text/html", alarm.MessageText+"\n\n"+result)
-	UpdateRecipients(alarm, m)
-	UpdateAttachments(alarm, m)
+	updateRecipients(alarm, m)
+	updateAttachments(alarm, m)
 	d := gomail.NewDialer(host, port, username, password)
 	if emailSentError := d.DialAndSend(m); emailSentError != nil {
-		LogError(alarm.Name, "Email not sent: "+emailSentError.Error())
+		logError(alarm.Name, "Email not sent: "+emailSentError.Error())
 		return false
 	} else {
-		LogInfo(alarm.Name, "Email sent")
+		logInfo(alarm.Name, "Email sent")
 	}
-	LogInfo(alarm.Name, "Sending alarm mail done, elapsed: "+time.Since(timer).String())
+	logInfo(alarm.Name, "Sending alarm mail done, elapsed: "+time.Since(timer).String())
 	return true
 }
 
-func UpdateAttachments(alarm database.Alarm, m *gomail.Message) {
+func updateAttachments(alarm database.Alarm, m *gomail.Message) {
 	if len(alarm.Pdf) > 0 {
-		CreatePdf(alarm)
+		createPdf(alarm)
 		m.Attach(strconv.Itoa(int(alarm.ID)) + ".pdf")
 	}
 }
 
-func UpdateRecipients(alarm database.Alarm, m *gomail.Message) {
+func updateRecipients(alarm database.Alarm, m *gomail.Message) {
 	if strings.Contains(alarm.Recipients, ",") {
 		emails := strings.Split(alarm.Recipients, ",")
 		m.SetHeader("To", emails...)
@@ -91,24 +91,24 @@ func UpdateRecipients(alarm database.Alarm, m *gomail.Message) {
 	}
 }
 
-func CreatePdf(alarm database.Alarm) {
-	LogInfo(alarm.Name, "Creating pdf from "+alarm.Pdf)
+func createPdf(alarm database.Alarm) {
+	logInfo(alarm.Name, "Creating pdf from "+alarm.Pdf)
 	timer := time.Now()
 	outputName := strconv.Itoa(int(alarm.ID)) + ".pdf"
 	cmd := exec.Command("chromium-browser", "--headless", "--disable-gpu", "--no-sandbox", "--print-to-pdf="+outputName, alarm.Pdf)
 	err := cmd.Run()
 	if err != nil {
-		LogError(alarm.Name, "Problem creating pdf: "+err.Error())
+		logError(alarm.Name, "Problem creating pdf: "+err.Error())
 	}
-	LogInfo(alarm.Name, "Pdf created in "+time.Since(timer).String())
+	logInfo(alarm.Name, "Pdf created in "+time.Since(timer).String())
 }
 
-func ReadMailSettings(alarm database.Alarm) (error, string, int, string, string, string) {
-	LogInfo(alarm.Name, "Reading mail settings")
+func readMailSettings(alarm database.Alarm) (error, string, int, string, string, string) {
+	logInfo(alarm.Name, "Reading mail settings")
 	timer := time.Now()
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	if err != nil {
-		LogError("MAIN", "Problem opening database: "+err.Error())
+		logError("MAIN", "Problem opening database: "+err.Error())
 		return nil, "", 0, "", "", ""
 	}
 	sqlDB, err := db.DB()
@@ -120,7 +120,7 @@ func ReadMailSettings(alarm database.Alarm) (error, string, int, string, string,
 	db.Where("name=?", "port").Find(&settingsPort)
 	port, err := strconv.Atoi(settingsPort.Value)
 	if err != nil {
-		LogError("MAIN", "Problem parsing port for email, using default port 587 "+err.Error())
+		logError("MAIN", "Problem parsing port for email, using default port 587 "+err.Error())
 		port = 587
 	}
 	var settingsUsername database.Setting
@@ -132,16 +132,16 @@ func ReadMailSettings(alarm database.Alarm) (error, string, int, string, string,
 	var settingsEmail database.Setting
 	db.Where("name=?", "email").Find(&settingsEmail)
 	email := settingsEmail.Value
-	LogInfo(alarm.Name, "Mail settings read in "+time.Since(timer).String())
+	logInfo(alarm.Name, "Mail settings read in "+time.Since(timer).String())
 	return err, host, port, username, password, email
 }
 
-func CreateAlarmRecord(alarm database.Alarm) {
-	LogInfo(alarm.Name, "Creating alarm record")
+func createAlarmRecord(alarm database.Alarm) {
+	logInfo(alarm.Name, "Creating alarm record")
 	timer := time.Now()
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	if err != nil {
-		LogError(alarm.Name, "Problem opening database: "+err.Error())
+		logError(alarm.Name, "Problem opening database: "+err.Error())
 	}
 	sqlDB, err := db.DB()
 	defer sqlDB.Close()
@@ -152,15 +152,15 @@ func CreateAlarmRecord(alarm database.Alarm) {
 		alarmRecord.WorkplaceID = alarm.WorkplaceID
 	}
 	db.Save(&alarmRecord)
-	LogInfo(alarm.Name, "Alarm record created in "+time.Since(timer).String())
+	logInfo(alarm.Name, "Alarm record created in "+time.Since(timer).String())
 }
 
-func ReadAlarmRecord(alarm database.Alarm) bool {
-	LogInfo(alarm.Name, "Reading alarm reacord")
+func readAlarmRecord(alarm database.Alarm) bool {
+	logInfo(alarm.Name, "Reading alarm reacord")
 	timer := time.Now()
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	if err != nil {
-		LogError(alarm.Name, "Problem opening database: "+err.Error())
+		logError(alarm.Name, "Problem opening database: "+err.Error())
 		return false
 	}
 	sqlDB, err := db.DB()
@@ -169,21 +169,21 @@ func ReadAlarmRecord(alarm database.Alarm) bool {
 	db.Where("alarm_id = ?", alarm.ID).Where("date_time_end is null").Find(&alarmRecord)
 	alarmHasOpenRecord := alarmRecord.ID > 0
 	if alarmHasOpenRecord {
-		LogInfo(alarm.Name, "Alarm has open record")
-		LogInfo(alarm.Name, "Alarm record read in "+time.Since(timer).String())
+		logInfo(alarm.Name, "Alarm has open record")
+		logInfo(alarm.Name, "Alarm record read in "+time.Since(timer).String())
 		return true
 	}
-	LogInfo(alarm.Name, "Alarm has not open record")
-	LogInfo(alarm.Name, "Alarm record read in "+time.Since(timer).String())
+	logInfo(alarm.Name, "Alarm has not open record")
+	logInfo(alarm.Name, "Alarm record read in "+time.Since(timer).String())
 	return false
 }
 
-func ReadAlarmResult(alarm database.Alarm) (bool, string) {
-	LogInfo(alarm.Name, "Reading alarm results")
+func readAlarmResult(alarm database.Alarm) (bool, string) {
+	logInfo(alarm.Name, "Reading alarm results")
 	timer := time.Now()
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	if err != nil {
-		LogError(alarm.Name, "Problem opening database: "+err.Error())
+		logError(alarm.Name, "Problem opening database: "+err.Error())
 		return false, ""
 	}
 	sqlDB, err := db.DB()
@@ -192,11 +192,11 @@ func ReadAlarmResult(alarm database.Alarm) (bool, string) {
 	db.Raw(alarm.SqlCommand).Scan(&result)
 	alarmHasResult := len(result.Result) > 0
 	if !alarmHasResult {
-		LogInfo(alarm.Name, "Alarm has no results")
-		LogInfo(alarm.Name, "Alarm results read in "+time.Since(timer).String())
+		logInfo(alarm.Name, "Alarm has no results")
+		logInfo(alarm.Name, "Alarm results read in "+time.Since(timer).String())
 		return false, ""
 	}
-	LogInfo(alarm.Name, "Alarm has a result")
-	LogInfo(alarm.Name, "Alarm results read in "+time.Since(timer).String())
+	logInfo(alarm.Name, "Alarm has a result")
+	logInfo(alarm.Name, "Alarm results read in "+time.Since(timer).String())
 	return true, result.Result
 }

@@ -7,12 +7,12 @@ import (
 	"time"
 )
 
-func UpdateProgramVersion() {
-	LogInfo("MAIN", "Writing program version into settings")
+func updateProgramVersion() {
+	logInfo("MAIN", "Writing program version into settings")
 	timer := time.Now()
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	if err != nil {
-		LogError("MAIN", "Problem opening database: "+err.Error())
+		logError("MAIN", "Problem opening database: "+err.Error())
 		return
 	}
 	sqlDB, err := db.DB()
@@ -22,22 +22,22 @@ func UpdateProgramVersion() {
 	existingSettings.Name = serviceName
 	existingSettings.Value = version
 	db.Save(&existingSettings)
-	LogInfo("MAIN", "Program version written into settings in "+time.Since(timer).String())
+	logInfo("MAIN", "Program version written into settings in "+time.Since(timer).String())
 }
 
-func RunAlarm(alarm database.Alarm) {
-	LogInfo(alarm.Name, "Alarm main loop started")
+func runAlarm(alarm database.Alarm) {
+	logInfo(alarm.Name, "Alarm main loop started")
 	timer := time.Now()
 	alarmSync.Lock()
 	runningAlarms = append(runningAlarms, alarm)
 	alarmSync.Unlock()
-	ProcessAlarm(alarm)
-	RemoveAlarmFromRunningDevices(alarm)
-	LogInfo("MAIN", "Alarm main loop ended in "+time.Since(timer).String())
+	processAlarm(alarm)
+	removeAlarmFromRunningDevices(alarm)
+	logInfo("MAIN", "Alarm main loop ended in "+time.Since(timer).String())
 
 }
 
-func RemoveAlarmFromRunningDevices(alarm database.Alarm) {
+func removeAlarmFromRunningDevices(alarm database.Alarm) {
 	for idx, runningAlarm := range runningAlarms {
 		if alarm.Name == runningAlarm.Name {
 			alarmSync.Lock()
@@ -47,18 +47,18 @@ func RemoveAlarmFromRunningDevices(alarm database.Alarm) {
 	}
 }
 
-func ReadActiveAlarms(reference string) {
-	LogInfo("MAIN", "Reading active alarms")
+func readActiveAlarms(reference string) {
+	logInfo("MAIN", "Reading active alarms")
 	timer := time.Now()
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
 	if err != nil {
-		LogError(reference, "Problem opening database: "+err.Error())
+		logError(reference, "Problem opening database: "+err.Error())
 		activeAlarms = nil
 		return
 	}
 	sqlDB, err := db.DB()
 	defer sqlDB.Close()
 	db.Find(&activeAlarms)
-	LogInfo("MAIN", "Active alarms read in "+time.Since(timer).String())
+	logInfo("MAIN", "Active alarms read in "+time.Since(timer).String())
 
 }
