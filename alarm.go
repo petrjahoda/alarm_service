@@ -22,10 +22,8 @@ func processAlarm(alarm database.Alarm) {
 	alarmHasResult, alarmResult := readAlarmResult(alarm)
 	alarmHasRecord := readAlarmRecord(alarm)
 	if alarmHasResult && !alarmHasRecord {
-		emailSent := sendAlarmEmail(alarm, alarmResult)
-		if emailSent {
-			createAlarmRecord(alarm)
-		}
+		sendAlarmEmail(alarm, alarmResult)
+		createAlarmRecord(alarm)
 	} else if alarmHasRecord && !alarmHasResult {
 		updateAlarmRecordToClosed(alarm)
 	}
@@ -190,13 +188,23 @@ func readAlarmResult(alarm database.Alarm) (bool, string) {
 	defer sqlDB.Close()
 	var result Result
 	db.Raw(alarm.SqlCommand).Scan(&result)
-	alarmHasResult := len(result.Result) > 0
-	if !alarmHasResult {
+	if result.Result == "true" {
+		logInfo(alarm.Name, "Alarm has a result")
+		logInfo(alarm.Name, "Alarm results read in "+time.Since(timer).String())
+		return true, result.Result
+	} else if result.Result == "false" {
 		logInfo(alarm.Name, "Alarm has no results")
 		logInfo(alarm.Name, "Alarm results read in "+time.Since(timer).String())
 		return false, ""
+	} else {
+		alarmHasResult := len(result.Result) > 0
+		if !alarmHasResult {
+			logInfo(alarm.Name, "Alarm has no results")
+			logInfo(alarm.Name, "Alarm results read in "+time.Since(timer).String())
+			return false, ""
+		}
+		logInfo(alarm.Name, "Alarm has a result")
+		logInfo(alarm.Name, "Alarm results read in "+time.Since(timer).String())
+		return true, result.Result
 	}
-	logInfo(alarm.Name, "Alarm has a result")
-	logInfo(alarm.Name, "Alarm results read in "+time.Since(timer).String())
-	return true, result.Result
 }
