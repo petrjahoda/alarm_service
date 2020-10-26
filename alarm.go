@@ -34,11 +34,11 @@ func updateAlarmRecordToClosed(alarm database.Alarm) {
 	logInfo(alarm.Name, "Updating alarm record to closed")
 	timer := time.Now()
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
 	if err != nil {
 		logError(alarm.Name, "Problem opening database: "+err.Error())
 	}
-	sqlDB, err := db.DB()
-	defer sqlDB.Close()
 	var alarmRecord database.AlarmRecord
 	db.Where("alarm_id = ?", alarm.ID).Where("date_time_end is null").Find(&alarmRecord)
 	alarmRecord.DateTimeEnd = sql.NullTime{Time: time.Now(), Valid: true}
@@ -105,12 +105,12 @@ func readMailSettings(alarm database.Alarm) (error, string, int, string, string,
 	logInfo(alarm.Name, "Reading mail settings")
 	timer := time.Now()
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
 	if err != nil {
 		logError("MAIN", "Problem opening database: "+err.Error())
 		return nil, "", 0, "", "", ""
 	}
-	sqlDB, err := db.DB()
-	defer sqlDB.Close()
 	var settingsHost database.Setting
 	db.Where("name=?", "host").Find(&settingsHost)
 	host := settingsHost.Value
@@ -138,11 +138,11 @@ func createAlarmRecord(alarm database.Alarm) {
 	logInfo(alarm.Name, "Creating alarm record")
 	timer := time.Now()
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
 	if err != nil {
 		logError(alarm.Name, "Problem opening database: "+err.Error())
 	}
-	sqlDB, err := db.DB()
-	defer sqlDB.Close()
 	var alarmRecord database.AlarmRecord
 	alarmRecord.DateTimeStart = time.Now()
 	alarmRecord.AlarmID = int(alarm.ID)
@@ -157,12 +157,12 @@ func readAlarmRecord(alarm database.Alarm) bool {
 	logInfo(alarm.Name, "Reading alarm reacord")
 	timer := time.Now()
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
 	if err != nil {
 		logError(alarm.Name, "Problem opening database: "+err.Error())
 		return false
 	}
-	sqlDB, err := db.DB()
-	defer sqlDB.Close()
 	var alarmRecord database.AlarmRecord
 	db.Where("alarm_id = ?", alarm.ID).Where("date_time_end is null").Find(&alarmRecord)
 	alarmHasOpenRecord := alarmRecord.ID > 0
@@ -180,12 +180,12 @@ func readAlarmResult(alarm database.Alarm) (bool, string) {
 	logInfo(alarm.Name, "Reading alarm results")
 	timer := time.Now()
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
 	if err != nil {
 		logError(alarm.Name, "Problem opening database: "+err.Error())
 		return false, ""
 	}
-	sqlDB, err := db.DB()
-	defer sqlDB.Close()
 	var result Result
 	db.Raw(alarm.SqlCommand).Scan(&result)
 	if result.Result == "true" {

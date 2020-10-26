@@ -11,12 +11,12 @@ func updateProgramVersion() {
 	logInfo("MAIN", "Writing program version into settings")
 	timer := time.Now()
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
 	if err != nil {
 		logError("MAIN", "Problem opening database: "+err.Error())
 		return
 	}
-	sqlDB, err := db.DB()
-	defer sqlDB.Close()
 	var existingSettings database.Setting
 	db.Where("name=?", serviceName).Find(&existingSettings)
 	existingSettings.Name = serviceName
@@ -51,13 +51,13 @@ func readActiveAlarms(reference string) {
 	logInfo("MAIN", "Reading active alarms")
 	timer := time.Now()
 	db, err := gorm.Open(postgres.Open(config), &gorm.Config{})
+	sqlDB, _ := db.DB()
+	defer sqlDB.Close()
 	if err != nil {
 		logError(reference, "Problem opening database: "+err.Error())
 		activeAlarms = nil
 		return
 	}
-	sqlDB, err := db.DB()
-	defer sqlDB.Close()
 	db.Find(&activeAlarms)
 	logInfo("MAIN", "Active alarms read in "+time.Since(timer).String())
 
