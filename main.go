@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const version = "2021.1.2.21"
+const version = "2021.1.3.18"
 const serviceName = "Alarm Service"
 const serviceDescription = "Creates alarms for workplaces"
 const downloadInSeconds = 60
