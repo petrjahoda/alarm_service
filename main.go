@@ -12,7 +12,7 @@ const version = "2021.2.1.8"
 const serviceName = "Alarm Service"
 const serviceDescription = "Creates alarms for workplaces"
 const downloadInSeconds = 60
-const config = "user=postgres password=pj79.. dbname=system host=database port=5432 sslmode=disable application_name=zapsi_service"
+const config = "user=postgres password=pj79.. dbname=system host=database port=5432 sslmode=disable application_name=alarm_service"
 
 var (
 	activeAlarms  []database.Alarm
