@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const version = "2021.2.2.13"
+const version = "2021.2.3.14"
 const serviceName = "Alarm Service"
 const serviceDescription = "Creates alarms for workplaces"
 const downloadInSeconds = 60
@@ -24,6 +24,7 @@ type program struct{}
 
 func main() {
 	logInfo("MAIN", serviceName+" ["+version+"] starting...")
+	logInfo("MAIN", "© "+strconv.Itoa(time.Now().Year())+" Petr Jahoda")
 	serviceConfig := &service.Config{
 		Name:        serviceName,
 		DisplayName: serviceName,
